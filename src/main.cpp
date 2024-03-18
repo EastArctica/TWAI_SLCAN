@@ -409,7 +409,43 @@ void pars_slcancmd(char *buf)
     }
     break;
   case 'F': // STATUS FLAGS
-    Serial.print("F00");
+    if (!working)
+    {
+      slcan_nack();
+      break;
+    }
+    
+    uint32_t alerts;
+    twai_read_alerts(&alerts, 0);
+
+    uint8_t result;
+    if (alerts & TWAI_ALERT_RX_QUEUE_FULL)
+    {
+      result |= (1 << 0);
+    }
+    if (alerts & TWAI_ALERT_ERR_ACTIVE)
+    {
+      result |= (1 << 2);
+    }
+    if (alerts & TWAI_ALERT_RX_FIFO_OVERRUN)
+    {
+      result |= (1 << 3);
+    }
+    if (alerts & TWAI_ALERT_ERR_PASS)
+    {
+      result |= (1 << 5);
+    }
+    if (alerts & TWAI_ALERT_ARB_LOST)
+    {
+      result |= (1 << 6);
+    }
+    if (alerts & TWAI_ALERT_BUS_ERROR)
+    {
+      result |= (1 << 7);
+    }
+
+    Serial.printf("F%2X", result);
+    digitalWrite(YELLOW_LED, LOW);
     slcan_ack();
     break;
   case 'V': // VERSION NUMBER
@@ -547,7 +583,9 @@ void setup()
   pinMode(YELLOW_LED, OUTPUT);
 
   g_config = TWAI_GENERAL_CONFIG_DEFAULT((gpio_num_t)CAN_TX, (gpio_num_t)CAN_RX, TWAI_MODE_LISTEN_ONLY);
+  g_config.alerts_enabled = TWAI_ALERT_ALL;
   f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
+
   delay(2000);
 } // setup()
 
