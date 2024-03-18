@@ -320,17 +320,36 @@ void pars_slcancmd(char *buf)
     }
     break;
   case 'M': /// set ACCEPTANCE CODE ACn REG
+    if (!initiated || working)
+    {
+      break;
+    }
+
+    f_config.acceptance_code = strtoul(&buf[1], (char**)&buf[9], 16);
     slcan_ack();
     break;
-  case 'm': // set ACCEPTANCE CODE AMn REG
+  case 'm': // set ACCEPTANCE MASK AMn REG
+    if (!initiated || working)
+    {
+      break;
+    }
+
+    f_config.acceptance_mask = strtoul(&buf[1], (char**)&buf[9], 16);
     slcan_ack();
     break;
   case 's': // CUSTOM CAN bit-rate
-    // initiated = true;
-    slcan_nack();
-#ifdef DEBUG
-    Serial.println("Custom CAN bit-rate not supported");
-#endif
+    uint8_t btr0 = strtoul(&buf[1], (char**)&buf[3], 16);
+    uint8_t btr1 = strtoul(&buf[3], (char**)&buf[5], 16);
+
+    t_config = {
+      .brp = (uint32_t)(btr0 & 0x3F),
+      .tseg_1 = (uint8_t)(btr1 & 0x0F),
+      .tseg_2 = (uint8_t)((btr1 >> 4) & 0x07),
+      .sjw = (uint8_t)((btr0 >> 6) & 0x03),
+      .triple_sampling = false
+    };
+    initiated = true;
+    slcan_ack();
     break;
   case 'S': // CAN bit-rate
     if (working)
