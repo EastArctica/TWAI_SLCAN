@@ -14,6 +14,7 @@
 // GND to SWITCH CENTER, SSD1306 & WAVESHARE CAN transceiver
 
 bool working = false;
+bool initiated = false;
 bool timestamp = false;
 static uint8_t hexval[17] = "0123456789ABCDEF";
 
@@ -46,7 +47,7 @@ void pars_slcancmd(char *buf)
   switch (buf[0])
   {
   case 'O': // Open CAN channel
-    if (!working)
+    if (!working && initiated)
     {
       if (twai_driver_install(&g_config, &t_config, &f_config) == ESP_OK) // Check if already working and install TWAI driver
       {
@@ -154,6 +155,7 @@ void pars_slcancmd(char *buf)
     slcan_ack();
     break;
   case 's': // CUSTOM CAN bit-rate
+    // initiated = true;
     slcan_nack();
 #ifdef DEBUG
     Serial.println("Custom CAN bit-rate not supported");
@@ -166,6 +168,7 @@ void pars_slcancmd(char *buf)
     }
     else
     {
+      initiated = true;
       switch (buf[1])
       {
       case '0': // 10k
@@ -205,6 +208,7 @@ void pars_slcancmd(char *buf)
         slcan_ack();
         break;
       default:
+        initiated = false;
         slcan_nack();
         digitalWrite(YELLOW_LED, HIGH);
 #ifdef DEBUG
