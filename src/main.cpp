@@ -20,6 +20,8 @@ static uint8_t hexval[17] = "0123456789ABCDEF";
 
 #define BAUDRATE 500000
 //#define DEBUG
+// Whether to follow SLCAN strictly or not, ex. sending a can identifier over 0x7FF
+#define SLCAN_STRICT
 
 QueueHandle_t tx_queue;         // Sender Queue
 twai_timing_config_t t_config;  // CAN Speed Config
@@ -39,6 +41,27 @@ void slcan_nack()
 {
   Serial.write('\a');
 } // slcan_nack()
+
+//----------------------------------------------------------------
+
+bool send_canmsg(uint32_t identifier, char* buf, char length, bool rtr, bool extended)
+{
+  if (!working) {
+    return false;
+  }
+
+  twai_message_t message;
+  message.identifier = identifier;
+  message.extd = extended;
+  message.rtr = rtr;
+  message.data_length_code = length;
+  if (!rtr)
+  {
+    memcpy(message.data, buf, length);
+  }
+
+  return twai_transmit(&message, pdMS_TO_TICKS(1000)) == ESP_OK;
+} // send_canmsg()
 
 //----------------------------------------------------------------
 
@@ -118,20 +141,168 @@ void pars_slcancmd(char *buf)
 
     break;
   case 't': // SEND STD FRAME
-    // send_canmsg(buf, false, false);
-    slcan_ack();
+    if (working) {
+      uint32_t identifier = strtoul(&buf[1], (char**)&buf[4], 16);
+      uint32_t data_length = strtoul(&buf[4], (char**)&buf[5], 10);
+#ifdef SLCAN_STRICT
+      if (identifier > 0x7FF)
+      {
+#ifdef DEBUG
+        Serial.println("Attempted to send standard frame with identifier over 0x7FF");
+#endif
+        slcan_nack();
+        break;
+      }
+      if (data_length > 8)
+      {
+#ifdef DEBUG
+          Serial.println("Attempted to send standard frame with length over 8");
+#endif
+        slcan_nack();
+        break;
+      }
+#endif
+
+      // Read buf
+      char* data = new char[data_length];
+      // Check if we actually have data_length bytes
+      if (strlen(buf) != 5 + 2 * data_length)
+      {
+        slcan_nack();
+        break;
+      }
+      
+      // Parse data bytes out
+      for (int i = 0; i < data_length; i++) {
+        data[i] = strtoul(&buf[5 + 2 * i], (char**)&buf[5 + 2 * (i + 1)], 16);
+      }
+
+      if (send_canmsg(identifier, data, data_length, false, false))
+      {
+        Serial.write('z');
+        slcan_ack();
+      }
+      else
+      {
+        slcan_nack();
+      }
+    }
     break;
   case 'T': // SEND EXT FRAME
-    // send_canmsg(buf, false, true);
-    slcan_ack();
+    if (working) {
+      uint32_t identifier = strtoul(&buf[1], (char**)&buf[9], 16);
+      uint32_t data_length = strtoul(&buf[9], (char**)&buf[10], 10);
+#ifdef SLCAN_STRICT
+      if (identifier > 0x1FFFFFFF)
+      {
+#ifdef DEBUG
+        Serial.println("Attempted to send extended frame with identifier over 0x1FFFFFFF");
+#endif
+        slcan_nack();
+        break;
+      }
+      if (data_length > 8)
+      {
+#ifdef DEBUG
+          Serial.println("Attempted to send extended frame with length over 8");
+#endif
+        slcan_nack();
+        break;
+      }
+#endif
+
+      // Read buf
+      char* data = new char[data_length];
+      // Check if we actually have data_length bytes
+      if (strlen(buf) != 10 + 2 * data_length)
+      {
+        slcan_nack();
+        break;
+      }
+      
+      // Parse data bytes out
+      for (int i = 0; i < data_length; i++) {
+        data[i] = strtoul(&buf[10 + 2 * i], (char**)&buf[10 + 2 * (i + 1)], 16);
+      }
+
+      if (send_canmsg(identifier, data, data_length, false, true))
+      {
+        Serial.write('Z');
+        slcan_ack();
+      }
+      else
+      {
+        slcan_nack();
+      }
+    }
     break;
   case 'r': // SEND STD RTR FRAME
-    // send_canmsg(buf, true, false);
-    slcan_ack();
+    if (working) {
+      uint32_t identifier = strtoul(&buf[1], (char**)&buf[4], 16);
+      uint32_t data_length = strtoul(&buf[4], (char**)&buf[5], 10);
+#ifdef SLCAN_STRICT
+      if (identifier > 0x7FF)
+      {
+#ifdef DEBUG
+        Serial.println("Attempted to send standard rtr frame with identifier over 0x7FF");
+#endif
+        slcan_nack();
+        break;
+      }
+      if (data_length > 8)
+      {
+#ifdef DEBUG
+          Serial.println("Attempted to send standard rtr frame with length over 8");
+#endif
+        slcan_nack();
+        break;
+      }
+#endif
+
+      if (send_canmsg(identifier, NULL, data_length, false, false))
+      {
+        Serial.write('z');
+        slcan_ack();
+      }
+      else
+      {
+        slcan_nack();
+      }
+    }
     break;
   case 'R': // SEND EXT RTR FRAME
-    // send_canmsg(buf, true, true);
-    slcan_ack();
+    if (working) {
+      uint32_t identifier = strtoul(&buf[1], (char**)&buf[9], 16);
+      uint32_t data_length = strtoul(&buf[9], (char**)&buf[10], 10);
+#ifdef SLCAN_STRICT
+      if (identifier > 0x1FFFFFFF)
+      {
+#ifdef DEBUG
+        Serial.println("Attempted to send extended rtr frame with identifier over 0x1FFFFFFF");
+#endif
+        slcan_nack();
+        break;
+      }
+      if (data_length > 8)
+      {
+#ifdef DEBUG
+          Serial.println("Attempted to send extended rtr frame with length over 8");
+#endif
+        slcan_nack();
+        break;
+      }
+#endif
+
+      if (send_canmsg(identifier, NULL, data_length, false, true))
+      {
+        Serial.write('Z');
+        slcan_ack();
+      }
+      else
+      {
+        slcan_nack();
+      }
+    }
     break;
   case 'Z': // ENABLE TIMESTAMPS
     switch (buf[1])
