@@ -69,7 +69,7 @@ void pars_slcancmd(char *buf)
 {
   switch (buf[0])
   {
-  case 'O': // Open CAN channel
+  case 'O': { // Open CAN channel
     if (!working && initiated)
     {
       if (twai_driver_install(&g_config, &t_config, &f_config) == ESP_OK) // Check if already working and install TWAI driver
@@ -102,7 +102,8 @@ void pars_slcancmd(char *buf)
       }
     }
     break;
-  case 'C':      // Close CAN channel
+  }
+  case 'C': { // Close CAN channel
     if (working) // check if working
     {
       if (twai_stop() != ESP_OK) // stop TWAI driver
@@ -138,9 +139,9 @@ void pars_slcancmd(char *buf)
         }
       }
     }
-
     break;
-  case 't': // SEND STD FRAME
+  }
+  case 't': { // SEND STD FRAME
     if (working) {
       uint32_t identifier = strtoul(&buf[1], (char**)&buf[4], 16);
       uint32_t data_length = strtoul(&buf[4], (char**)&buf[5], 10);
@@ -188,7 +189,8 @@ void pars_slcancmd(char *buf)
       }
     }
     break;
-  case 'T': // SEND EXT FRAME
+  }
+  case 'T': { // SEND EXT FRAME
     if (working) {
       uint32_t identifier = strtoul(&buf[1], (char**)&buf[9], 16);
       uint32_t data_length = strtoul(&buf[9], (char**)&buf[10], 10);
@@ -236,7 +238,8 @@ void pars_slcancmd(char *buf)
       }
     }
     break;
-  case 'r': // SEND STD RTR FRAME
+  }
+  case 'r': { // SEND STD RTR FRAME
     if (working) {
       uint32_t identifier = strtoul(&buf[1], (char**)&buf[4], 16);
       uint32_t data_length = strtoul(&buf[4], (char**)&buf[5], 10);
@@ -270,7 +273,8 @@ void pars_slcancmd(char *buf)
       }
     }
     break;
-  case 'R': // SEND EXT RTR FRAME
+  }
+  case 'R': { // SEND EXT RTR FRAME
     if (working) {
       uint32_t identifier = strtoul(&buf[1], (char**)&buf[9], 16);
       uint32_t data_length = strtoul(&buf[9], (char**)&buf[10], 10);
@@ -304,7 +308,8 @@ void pars_slcancmd(char *buf)
       }
     }
     break;
-  case 'Z': // ENABLE TIMESTAMPS
+  }
+  case 'Z': { // ENABLE TIMESTAMPS
     switch (buf[1])
     {
     case '0': // TIMESTAMP OFF
@@ -319,7 +324,8 @@ void pars_slcancmd(char *buf)
       break;
     }
     break;
-  case 'M': /// set ACCEPTANCE CODE ACn REG
+  }
+  case 'M': { // set ACCEPTANCE CODE ACn REG
     if (!initiated || working)
     {
       break;
@@ -328,7 +334,8 @@ void pars_slcancmd(char *buf)
     f_config.acceptance_code = strtoul(&buf[1], (char**)&buf[9], 16);
     slcan_ack();
     break;
-  case 'm': // set ACCEPTANCE MASK AMn REG
+  }
+  case 'm': { // set ACCEPTANCE MASK AMn REG
     if (!initiated || working)
     {
       break;
@@ -337,7 +344,8 @@ void pars_slcancmd(char *buf)
     f_config.acceptance_mask = strtoul(&buf[1], (char**)&buf[9], 16);
     slcan_ack();
     break;
-  case 's': // CUSTOM CAN bit-rate
+  }
+  case 's': { // CUSTOM CAN bit-rate
     uint8_t btr0 = strtoul(&buf[1], (char**)&buf[3], 16);
     uint8_t btr1 = strtoul(&buf[3], (char**)&buf[5], 16);
 
@@ -351,7 +359,8 @@ void pars_slcancmd(char *buf)
     initiated = true;
     slcan_ack();
     break;
-  case 'S': // CAN bit-rate
+  }
+  case 'S': { // CAN bit-rate
     if (working)
     {
       break;
@@ -408,7 +417,8 @@ void pars_slcancmd(char *buf)
       }
     }
     break;
-  case 'F': // STATUS FLAGS
+  }
+  case 'F': { // STATUS FLAGS
     if (!working)
     {
       slcan_nack();
@@ -448,21 +458,25 @@ void pars_slcancmd(char *buf)
     digitalWrite(YELLOW_LED, LOW);
     slcan_ack();
     break;
-  case 'V': // VERSION NUMBER
+  }
+  case 'V': { // VERSION NUMBER
     Serial.print("V1234");
     slcan_ack();
     break;
-  case 'N': // SERIAL NUMBER
+  }
+  case 'N': { // SERIAL NUMBER
     Serial.print("N2208");
     slcan_ack();
     break;
-  default:
+  }
+  default: {
     slcan_nack();
     digitalWrite(YELLOW_LED, HIGH);
 #ifdef DEBUG
     Serial.println("Invalid command");
 #endif
     break;
+  }
   }
 } // pars_slcancmd()
 
