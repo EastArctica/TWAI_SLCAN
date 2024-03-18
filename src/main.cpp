@@ -20,8 +20,8 @@ static uint8_t hexval[17] = "0123456789ABCDEF";
 
 #define BAUDRATE 500000
 //#define DEBUG
-// Whether to follow SLCAN strictly or not, ex. sending a can identifier over 0x7FF
-#define SLCAN_STRICT
+// Whether to follow LAWICEL strictly or not, ex. sending a can identifier over 0x7FF
+#define LAWICEL_STRICT
 
 QueueHandle_t tx_queue;         // Sender Queue
 twai_timing_config_t t_config;  // CAN Speed Config
@@ -145,7 +145,7 @@ void pars_slcancmd(char *buf)
     if (working) {
       uint32_t identifier = strtoul(&buf[1], (char**)&buf[4], 16);
       uint32_t data_length = strtoul(&buf[4], (char**)&buf[5], 10);
-#ifdef SLCAN_STRICT
+#ifdef LAWICEL_STRICT
       if (identifier > 0x7FF)
       {
 #ifdef DEBUG
@@ -194,7 +194,7 @@ void pars_slcancmd(char *buf)
     if (working) {
       uint32_t identifier = strtoul(&buf[1], (char**)&buf[9], 16);
       uint32_t data_length = strtoul(&buf[9], (char**)&buf[10], 10);
-#ifdef SLCAN_STRICT
+#ifdef LAWICEL_STRICT
       if (identifier > 0x1FFFFFFF)
       {
 #ifdef DEBUG
@@ -243,7 +243,7 @@ void pars_slcancmd(char *buf)
     if (working) {
       uint32_t identifier = strtoul(&buf[1], (char**)&buf[4], 16);
       uint32_t data_length = strtoul(&buf[4], (char**)&buf[5], 10);
-#ifdef SLCAN_STRICT
+#ifdef LAWICEL_STRICT
       if (identifier > 0x7FF)
       {
 #ifdef DEBUG
@@ -278,7 +278,7 @@ void pars_slcancmd(char *buf)
     if (working) {
       uint32_t identifier = strtoul(&buf[1], (char**)&buf[9], 16);
       uint32_t data_length = strtoul(&buf[9], (char**)&buf[10], 10);
-#ifdef SLCAN_STRICT
+#ifdef LAWICEL_STRICT
       if (identifier > 0x1FFFFFFF)
       {
 #ifdef DEBUG
