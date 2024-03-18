@@ -428,31 +428,13 @@ void pars_slcancmd(char *buf)
     uint32_t alerts;
     twai_read_alerts(&alerts, 0);
 
-    uint8_t result;
-    if (alerts & TWAI_ALERT_RX_QUEUE_FULL)
-    {
-      result |= (1 << 0);
-    }
-    if (alerts & TWAI_ALERT_ERR_ACTIVE)
-    {
-      result |= (1 << 2);
-    }
-    if (alerts & TWAI_ALERT_RX_FIFO_OVERRUN)
-    {
-      result |= (1 << 3);
-    }
-    if (alerts & TWAI_ALERT_ERR_PASS)
-    {
-      result |= (1 << 5);
-    }
-    if (alerts & TWAI_ALERT_ARB_LOST)
-    {
-      result |= (1 << 6);
-    }
-    if (alerts & TWAI_ALERT_BUS_ERROR)
-    {
-      result |= (1 << 7);
-    }
+    uint8_t result =
+      !!(alerts & TWAI_ALERT_RX_QUEUE_FULL)   << 0 |
+      !!(alerts & TWAI_ALERT_ERR_ACTIVE)      << 2 |
+      !!(alerts & TWAI_ALERT_RX_FIFO_OVERRUN) << 3 |
+      !!(alerts & TWAI_ALERT_ERR_PASS)        << 5 |
+      !!(alerts & TWAI_ALERT_ARB_LOST)        << 6 |
+      !!(alerts & TWAI_ALERT_BUS_ERROR)       << 7;
 
     Serial.printf("F%2X", result);
     digitalWrite(YELLOW_LED, LOW);
